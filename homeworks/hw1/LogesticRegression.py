@@ -65,6 +65,6 @@ if __name__ == "__main__":
             dataset = dataset + [f]
         dataset = np.array(dataset)
     print(dataset.shape)
-    X, y = dataset[:, :-1], dataset[:, -1]
+    X, y = dataset[:, :-1], dataset[:, -1] == 'e'
     print(X.shape, y.shape)
     lr = LogesticRegression(numClasses=10)
