@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from math import sqrt, pi, exp
 
 
 class NaiveBayse():
@@ -41,13 +42,13 @@ class NaiveBayse():
             self.classProbablities += [counts[i]/counts.sum()]
         self.classProbablities = np.array(self.classProbablities)
         self.gausians = self.__calculateGausians(data)
-        # print(self.classes, self.classProbablities)
-        # print(self.gausians)
 
     def __gausian(self, c, f, x):
         (m, sigma) = self.gausians[c][f]
-        a = 1/(np.sqrt(2*np.pi*sigma*sigma))
-        b = np.exp((-1*(x-m)*(x-m))/(2*sigma*sigma))
+        if(sigma == 0):
+            return 1
+        a = 1/(sqrt(2*pi*sigma*sigma))
+        b = exp((-1*(x-m)*(x-m))/(2*sigma*sigma))
         return a*b
 
     def __pEvidance(self, x):
@@ -87,8 +88,6 @@ def loadDataset(path):
                 break
             line = line.split(',')
             line[-1] = line[-1][:-1]
-            line = list(map(lambda x: ord(x) - ord('a'), line))
-            line[0] = 0 if(line[0] == ord('p') - ord('a')) else 1
             dataset += [line]
     dataset = np.array(dataset)
     return dataset
@@ -108,14 +107,36 @@ def testDataSeparator(data):
         trainData += [data[i]]
     trainData = np.array(trainData)
     # (xTrain, yTrain), (xTest, yTest)
-    return (trainData[:, 1:], trainData[:, 0]), (testData[:, 1:], testData[:, 0])
+    return (trainData[:, 1:], np.array(trainData[:, 0], np.uint8)), (testData[:, 1:], np.array(testData[:, 0], np.uint8))
+
+
+def convert2Numbers(data):
+    nData = np.zeros(data.shape)
+    cat = []
+
+    for i in range(data.shape[1]):
+        cat += [list(np.unique(data[:, i]))]
+
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            nData[i, j] = cat[j].index(data[i, j])
+
+    return nData
+
+
+def accuracy_score(a, b):
+    c = 0
+    for i in range(len(a)):
+        if(a[i] == b[i]):
+            c += 1
+    return (c/len(a))*100
 
 
 if __name__ == '__main__':
     dataset = loadDataset("agaricus-lepiota.data")
+    dataset = convert2Numbers(dataset)
     train, test = testDataSeparator(dataset)
     print(train[0].shape, train[1].shape)
     clf = NaiveBayse(train)
     y_pred = clf.predict(test[0])
-    print(y_pred[:10])
-    print(test[1][:10])
+    print("Accuracy Score: ", accuracy_score(y_pred, test[1]))
