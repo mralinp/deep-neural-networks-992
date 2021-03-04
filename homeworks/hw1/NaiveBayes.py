@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class NaiveBayse():
@@ -13,35 +14,67 @@ class NaiveBayse():
         sigmas = X - medians
         sigmas = sigmas*sigmas
         sigmas = np.sum(sigmas, axis=0)
+        sigmas = sigmas/(len(X)-1)
         return sigmas
 
-    def __init__(self, data):
-        self.medians = self.__calculateMedians(data)
-        self.sigmas = self.__calculateSigmas(data)
-        self.numClasses, counts = np.unique(data[:, 0], return_counts=True)
-        self.classProbablities = []
-        for i in range(len(self.numClasses)):
-            self.probablities += [counts[i]/counts.sum()]
-        self.classProbablities = np.array(self.classProbablities)
+    def __calculateGausians(self, data):
+        categoricalData = []
+        for c in self.classes:
+            cData = []
+            for i in range(len(data[1])):
+                if(data[1][i] == c):
+                    cData += [data[0][i]]
+            cData = np.array(cData)
+            categoricalData += [cData]
+        categoricalGausians = []
+        for cData in categoricalData:
+            sigmas = self.__calculateSigmas(cData)
+            medians = self.__calculateMedians(cData)
+            gausian = list(zip(medians, sigmas))
+            categoricalGausians += [gausian]
+        return categoricalGausians
 
-    def __gausian(self, i, x):
-        a = 1/(np.sqrt(2*np.pi*self.sigmas(i)*self.sigmas(i)))
-        b = np.exp(
-            (-1*(x-self.medians[i])*(x-self.medians[i]))/(2*self.sigmas[i]*self.sigmas[i]))
+    def __init__(self, data):
+        self.classes, counts = np.unique(data[1], return_counts=True)
+        self.classProbablities = []
+        for i in range(len(self.classes)):
+            self.classProbablities += [counts[i]/counts.sum()]
+        self.classProbablities = np.array(self.classProbablities)
+        self.gausians = self.__calculateGausians(data)
+        # print(self.classes, self.classProbablities)
+        # print(self.gausians)
+
+    def __gausian(self, c, f, x):
+        (m, sigma) = self.gausians[c][f]
+        a = 1/(np.sqrt(2*np.pi*sigma*sigma))
+        b = np.exp((-1*(x-m)*(x-m))/(2*sigma*sigma))
         return a*b
 
     def __pEvidance(self, x):
+        pe = 0
+        for c in self.classes:
+            p = self.classProbablities[c]
+            for i in range(len(x)):
+                p = p * self.__gausian(c, i, x[i])
+            pe += p
+        return pe
 
-    def __pConditional(self, x):
-        for
+    def __probablities(self, x):
+
+        p_e = self.__pEvidance(x)
+        p_c = []
+        for c in self.classes:
+            p = self.classProbablities[c]
+            for i in range(len(x)):
+                p = p * self.__gausian(c, i, x[i])
+            p_c += [p]
+        return np.array(p_c)
 
     def predict(self, X):
         y = []
-        for i in X:
-            pEvidance = self.__pEvidance(i)
-            conditionals = self.__pConditionals(i)
-            p = conditionals/pEvidance
-            y += [np.argmax(p)]
+        for x in X:
+            p_c = self.__probablities(x)
+            y += [np.argmax(p_c)]
         return np.array(y)
 
 
@@ -61,9 +94,28 @@ def loadDataset(path):
     return dataset
 
 
+def testDataSeparator(data):
+    indexes = random.sample(range(len(dataset)), 1000)
+    testData = []
+    for i in indexes:
+        testData += [data[i]]
+    testData = np.array(testData)
+
+    trainData = []
+    for i in range(len(data)):
+        if(i in indexes):
+            continue
+        trainData += [data[i]]
+    trainData = np.array(trainData)
+    # (xTrain, yTrain), (xTest, yTest)
+    return (trainData[:, 1:], trainData[:, 0]), (testData[:, 1:], testData[:, 0])
+
+
 if __name__ == '__main__':
     dataset = loadDataset("agaricus-lepiota.data")
-    X, y = dataset[:, 1:], dataset[:, 0]
-    print(X.shape, y.shape)
-    print(X[0], "\t", y[0])
-    clf = NaiveBayse(X, y)
+    train, test = testDataSeparator(dataset)
+    print(train[0].shape, train[1].shape)
+    clf = NaiveBayse(train)
+    y_pred = clf.predict(test[0])
+    print(y_pred[:10])
+    print(test[1][:10])
