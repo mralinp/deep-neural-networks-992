@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 class LogesticRegression:
     '''
-        This class is a LogesticReggression Classifier.
+        This class is a LogisticReggression Classifier.
         It could use pretrained weights or random weights.
         numClasses : number of output classes
         weights    : pretrained weights (None for random selection)
