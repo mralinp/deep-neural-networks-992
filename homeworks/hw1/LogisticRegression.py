@@ -4,7 +4,7 @@ import random
 from tqdm import tqdm
 
 
-class LogesticRegression:
+class LogisticRegression:
     '''
         This class is a LogisticReggression Classifier.
         It could use pretrained weights or random weights.
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     (xTrain, yTrain), (xTest, yTest) = testDataSeparator(dataset)
     print(xTrain.shape, xTest.shape)
     print(xTrain[0], yTrain[0])
-    clf = LogesticRegression()
+    clf = LogisticRegression()
     clf.fit(xTrain, yTrain)
     yPred = clf.predict(xTest)
     for i in range(len(yPred)):
